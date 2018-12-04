@@ -3,7 +3,6 @@
  * and open the template in the editor.
  */
 package volvis;
-
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.util.texture.Texture;
@@ -129,10 +128,14 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         double alpha = (coord[0] - x1);
         double beta = (coord[1] - y1);
         double gamma = (coord[2] - z1);
-        return (short) (volume.getVoxel(x1, y1, z1) * (1 - alpha) * (1 - beta) * (1 - gamma) + volume.getVoxel(x2, y1, z1) * alpha * (1 - beta) * (1 - gamma) +
-                volume.getVoxel(x1, y1, z2) * (1 - alpha) * (1 - beta) * gamma + volume.getVoxel(x2, y1, z2) * alpha * (1 - beta) * gamma +
-                volume.getVoxel(x1, y2, z1) * (1 - alpha) * beta * (1 - gamma) + volume.getVoxel(x2, y2, z1) * alpha * beta * (1 - gamma) +
-                volume.getVoxel(x1, y2, z2) * (1 - alpha) * beta * gamma + volume.getVoxel(x2, y2, z2) * alpha * beta * gamma);
+        return (short) (volume.getVoxel(x1, y1, z1) * (1 - alpha) * (1 - beta) * (1 - gamma)
+                + volume.getVoxel(x2, y1, z1) * alpha * (1 - beta) * (1 - gamma)
+                + volume.getVoxel(x1, y1, z2) * (1 - alpha) * (1 - beta) * gamma
+                + volume.getVoxel(x2, y1, z2) * alpha * (1 - beta) * gamma
+                + volume.getVoxel(x1, y2, z1) * (1 - alpha) * beta * (1 - gamma)
+                + volume.getVoxel(x2, y2, z1) * alpha * beta * (1 - gamma)
+                + volume.getVoxel(x1, y2, z2) * (1 - alpha) * beta * gamma
+                + volume.getVoxel(x2, y2, z2) * alpha * beta * gamma);
     }
 
     void slicer(double[] viewMatrix) {
@@ -408,21 +411,20 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                             + volumeCenter[1] + pos * viewVec[1];
                     coords[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter)
                             + volumeCenter[2] + pos * viewVec[2];
-                    if (((coords[0] < volume.getDimX() - 1 && coords[0] > 0) && (coords[1] < volume.getDimY() - 1 && coords[1] > 0) && (coords[2] < volume.getDimZ() - 1 && coords[2] >= 0))) {
+                    if (((coords[0] < volume.getDimX() - 1 && coords[0] > 0)
+                            && (coords[1] < volume.getDimY() - 1 && coords[1] > 0)
+                            && (coords[2] < volume.getDimZ() - 1 && coords[2] >= 0))) {
 
                         val = getVoxel(coords);
 
-                        VoxelGradient voxGrad = gradients.getGradient((int) Math.floor(coords[0]), (int) Math.floor(coords[1]), (int) Math.floor(coords[2]));
-
-                        if (val == definedIntensity && voxGrad.mag == 0) {
-                            voxelColor.a = definedColor.a * 1.0;
-                        } else if (voxGrad.mag > 0.0 && ((val - definedRadius * voxGrad.mag) <= definedIntensity) && ((val + definedRadius * voxGrad.mag) >= definedIntensity)) {
-                            voxelColor.a = definedColor.a * (1.0 - (1.0 / definedRadius) * (Math.abs((definedIntensity - val) / voxGrad.mag)));
-                        } else
-                            voxelColor.a = 0.0;
+                        VoxelGradient voxGrad = gradients.getGradient((int) Math.floor(coords[0]),
+                                                                      (int) Math.floor(coords[1]),
+                                                                      (int) Math.floor(coords[2]));
 
                         if (illumination) {
-                            if (voxGrad.mag > 0.0 && voxelColor.a > 0.0) {
+                            if (voxGrad.mag >= tfEditor2D.triangleWidget.minMag
+                                    && voxGrad.mag <= tfEditor2D.triangleWidget.maxMag
+                                    && voxelColor.a > 0.0) {
                                 // Filling N-Vector:
                                 nVec[0] = voxGrad.x / voxGrad.mag;
                                 nVec[1] = voxGrad.y / voxGrad.mag;
@@ -433,15 +435,29 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                                 double n_dot_h = VectorMath.dotproduct(nVec, hVec);
 
                                 if (l_dot_n > 0 && n_dot_h > 0) {
-                                    nextColor.r = i_a + (definedColor.r * k_diff * l_dot_n) + k_spec * Math.pow(n_dot_h, alpha);
-                                    nextColor.g = i_a + (definedColor.g * k_diff * l_dot_n) + k_spec * Math.pow(n_dot_h, alpha);
-                                    nextColor.b = i_a + (definedColor.b * k_diff * l_dot_n) + k_spec * Math.pow(n_dot_h, alpha);
-                                    nextColor.a = definedColor.a;
+                                    nextColor.r = i_a + (definedColor.r * k_diff * l_dot_n)
+                                            + k_spec * Math.pow(n_dot_h, alpha);
+                                    nextColor.g = i_a + (definedColor.g * k_diff * l_dot_n)
+                                            + k_spec * Math.pow(n_dot_h, alpha);
+                                    nextColor.b = i_a + (definedColor.b * k_diff * l_dot_n)
+                                            + k_spec * Math.pow(n_dot_h, alpha);
+                                    nextColor.a = 1.;
                                     break;
                                 }
 
                             }
                         } else {
+                            if (val == definedIntensity && voxGrad.mag == 0) {
+                                voxelColor.a = definedColor.a * 1.0;
+                            } else if (voxGrad.mag > tfEditor2D.triangleWidget.minMag
+                                    && voxGrad.mag < tfEditor2D.triangleWidget.maxMag
+                                    && ((val - definedRadius * voxGrad.mag) <= definedIntensity)
+                                    && ((val + definedRadius * voxGrad.mag) >= definedIntensity)) {
+                                voxelColor.a = definedColor.a * (1.0 - (1.0 / definedRadius)
+                                        * (Math.abs((definedIntensity - val) / voxGrad.mag)));
+                            } else
+                                voxelColor.a = 0.0;
+
                             nextColor.r = voxelColor.a * definedColor.r + (1. - voxelColor.a) * previousColor.r;
                             nextColor.g = voxelColor.a * definedColor.g + (1. - voxelColor.a) * previousColor.g;
                             nextColor.b = voxelColor.a * definedColor.b + (1. - voxelColor.a) * previousColor.b;

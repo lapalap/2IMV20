@@ -76,14 +76,20 @@ public class TransferFunction2DView extends javax.swing.JPanel {
         g2.setColor(Color.black);
         baseControlPoint = new Ellipse2D.Double(xpos - DOTSIZE / 2, ypos - DOTSIZE, DOTSIZE, DOTSIZE);
         g2.fill(baseControlPoint);
-        g2.drawLine(xpos, ypos, xpos - (int) (ed.triangleWidget.radius * binWidth * ed.maxGradientMagnitude), 0);
-        g2.drawLine(xpos, ypos, xpos + (int) (ed.triangleWidget.radius * binWidth * ed.maxGradientMagnitude), 0);
-        radiusControlPoint = new Ellipse2D.Double(xpos + (ed.triangleWidget.radius * binWidth * ed.maxGradientMagnitude) - DOTSIZE / 2,  0, DOTSIZE, DOTSIZE);
+        double radius = ed.triangleWidget.radius;
+        double magnitude = ed.maxGradientMagnitude;
+        double mag = ed.maxGradientMagnitude;
+        double minMag = ed.triangleWidget.minMag;
+        double maxMag = ed.triangleWidget.maxMag;
+        g2.drawLine(xpos, ypos, xpos - (int) (radius * binWidth * magnitude), 0);
+        g2.drawLine(xpos, ypos, xpos + (int) (radius * binWidth * magnitude), 0);
+        radiusControlPoint = new Ellipse2D.Double(xpos + (radius * binWidth * magnitude) - DOTSIZE / 2,  0, DOTSIZE, DOTSIZE);
+        g2.fill(radiusControlPoint);
+        g2.drawLine(xpos-(int)(radius*binWidth*minMag),(int)(ypos*(1-minMag/mag)),xpos+(int)(radius*binWidth*minMag),(int)(ypos*(1-minMag/mag)));
+        g2.drawLine(xpos-(int)(radius*binWidth*maxMag),(int)(ypos*(1-maxMag/mag)),xpos+(int)(radius*binWidth*maxMag),(int)(ypos*(1-maxMag/mag)));
+        radiusControlPoint = new Ellipse2D.Double(xpos + (radius * binWidth * magnitude) - DOTSIZE / 2,  0, DOTSIZE, DOTSIZE);
         g2.fill(radiusControlPoint);
         
-        
-        g2.drawLine(0, (int) (h - ed.triangleWidget.minGradient/ed.maxGradientMagnitude * h), w, (int) (h - ed.triangleWidget.minGradient/ed.maxGradientMagnitude * h));
-        g2.drawLine(0, (int) (h - ed.triangleWidget.maxGradient/ed.maxGradientMagnitude * h), w, (int) (h - ed.triangleWidget.maxGradient/ed.maxGradientMagnitude * h));
     }
     
     
@@ -106,13 +112,18 @@ public class TransferFunction2DView extends javax.swing.JPanel {
                 if (selectedBaseControlPoint) {
                     // restrain to horizontal movement
                     dragEnd.setLocation(dragEnd.x, baseControlPoint.getCenterY());
-                } else if (selectedRadiusControlPoint) {
+                }
+                
+                
+                else if (selectedRadiusControlPoint) {
                     // restrain to horizontal movement and avoid radius getting 0
                     dragEnd.setLocation(dragEnd.x, radiusControlPoint.getCenterY());
                     if (dragEnd.x - baseControlPoint.getCenterX() <= 0) {
                         dragEnd.x = (int) (baseControlPoint.getCenterX() + 1);
                     }
                 }
+                
+                
                 if (dragEnd.x < 0) {
                     dragEnd.x = 0;
                 }
