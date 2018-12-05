@@ -421,6 +421,17 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                                                                       (int) Math.floor(coords[1]),
                                                                       (int) Math.floor(coords[2]));
 
+                        if (val == definedIntensity && voxGrad.mag == 0) {
+                            voxelColor.a = definedColor.a * 1.0;
+                        } else if (voxGrad.mag > tfEditor2D.triangleWidget.minMag
+                                && voxGrad.mag < tfEditor2D.triangleWidget.maxMag
+                                && ((val - definedRadius * voxGrad.mag) <= definedIntensity)
+                                && ((val + definedRadius * voxGrad.mag) >= definedIntensity)) {
+                            voxelColor.a = definedColor.a * (1.0 - (1.0 / definedRadius)
+                                    * (Math.abs((definedIntensity - val) / voxGrad.mag)));
+                        } else
+                            voxelColor.a = 0.0;
+
                         if (illumination) {
                             if (voxGrad.mag >= tfEditor2D.triangleWidget.minMag
                                     && voxGrad.mag <= tfEditor2D.triangleWidget.maxMag
@@ -447,16 +458,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
                             }
                         } else {
-                            if (val == definedIntensity && voxGrad.mag == 0) {
-                                voxelColor.a = definedColor.a * 1.0;
-                            } else if (voxGrad.mag > tfEditor2D.triangleWidget.minMag
-                                    && voxGrad.mag < tfEditor2D.triangleWidget.maxMag
-                                    && ((val - definedRadius * voxGrad.mag) <= definedIntensity)
-                                    && ((val + definedRadius * voxGrad.mag) >= definedIntensity)) {
-                                voxelColor.a = definedColor.a * (1.0 - (1.0 / definedRadius)
-                                        * (Math.abs((definedIntensity - val) / voxGrad.mag)));
-                            } else
-                                voxelColor.a = 0.0;
 
                             nextColor.r = voxelColor.a * definedColor.r + (1. - voxelColor.a) * previousColor.r;
                             nextColor.g = voxelColor.a * definedColor.g + (1. - voxelColor.a) * previousColor.g;
